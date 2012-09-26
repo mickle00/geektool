@@ -1,0 +1,118 @@
+#!/usr/bin/python2.7
+from enterprise import SforceEnterpriseClient
+from ConfigParser import SafeConfigParser
+import sys
+from subprocess import call
+import urllib2
+import json
+import keyring
+import os
+import texttable
+import argparse
+
+parser = argparse.ArgumentParser(description='Executes a given SOQL query, and formats the output based upon argument.')
+parser.add_argument('queryString', type=str, help='The SOQL QueryString.')
+parser.add_argument('-j', '--json',action='store_true', help='Will print JSON')
+parser.add_argument('-c', dest='filename', type=str, help='Will create a CSV file with a given filename')
+parser.add_argument('-o',dest='Org', default='prod',choices=['prod', 'dharma', 'staging'], help='The Org to Use')
+
+args = parser.parse_args()
+
+## TODO: Add queryMore to recieve more than 2k records.
+## http://www.salesforce.com/us/developer/docs/api_rest/index_Left.htm#StartTopic=Content/resources_query.htm
+## TODO: look at CSV creation, and or enclosing in doublequotes
+
+def getCredentials():
+	username = 'mistewart@expedia.com'
+	password = keyring.get_password('GSO_Production', username)
+	return username, password, ''
+
+def doLogin():
+	username, password, securitytoken = getCredentials()
+	h = SforceEnterpriseClient('../config/wsdl.jsp.xml')
+	result = h.login(username, password, securitytoken)
+	return result['sessionId']
+
+def createJSON():
+	print getJSON()
+
+def getJSON():
+	queryString = args.queryString
+	queryString = queryString.replace(' ', '+')
+	sessionId = doLogin()
+	myURL = "https://na8.salesforce.com/services/data/v24.0/query/?q="+queryString 
+	req = urllib2.Request(myURL)
+	req.add_header('Authorization', 'OAuth '+sessionId)
+	req.add_header('X-PrettyPrint', 1)
+	res = urllib2.urlopen(req)
+	return res.read()
+
+def createCSV():
+	jsonDump = json.loads(getJSON())
+	filename = args.filename
+	outputString = ''
+	keys = []
+	for key in jsonDump['records'][0]:
+		if key != 'attributes':
+			keys.append(key)
+			outputString += key +  ','
+	outputString = outputString[:-1]
+	outputString += '\n'
+
+	for record in jsonDump['records']:
+		for key in keys:
+			if record[key] != None:
+				outputString += str(record[key])
+			outputString += ','
+
+		outputString = outputString[:-1]
+		outputString += '\n'
+
+	newFile = open(filename, 'wb')
+	newFile.write(outputString.encode('utf8', 'replace'))
+	newFile.close()
+
+def printTextTable():
+	table = texttable.Texttable()
+	jsonDump = json.loads(getJSON())
+	keys = []
+	#TODO: Get more than one level of nested JSON arrays from related objects
+	for key in jsonDump['records'][0]:
+		if key != 'attributes': 
+			if type(jsonDump['records'][0][key]) != type({}):
+				keys.append(key)
+			else: 
+				for subkey in jsonDump['records'][0][key]:
+					if subkey != 'attributes':
+						keys.append(key + '.' + subkey)
+	tableHeaders = []
+	for key in keys:
+		tableHeaders.append(str(key))
+	table.add_row(tableHeaders)
+	
+	for record in jsonDump['records']:
+		outputList = []
+		for key in keys:
+			if '.' in key:
+				key, subkey = key.split('.')
+				outputList.append(record[key][subkey])
+
+			elif record[key] != None: 
+				outputList.append(str(record[key]))
+		table.add_row(outputList)
+	print table.draw() + "\n" 
+
+def delegate(queryString):
+	if args.json and args.filename:
+		parser.error('You cannot select both JSON and CSV output.')
+	if args.Org != 'prod': 
+		print 'Currently only prod is supported'
+		return
+	if args.json:
+		createJSON()
+	elif args.filename:
+		createCSV()
+	else:
+		printTextTable()
+
+delegate(args.queryString)
