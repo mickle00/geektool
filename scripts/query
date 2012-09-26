@@ -43,7 +43,7 @@ def getCredentials():
 
 def doLogin():
 	username, password, securitytoken = getCredentials()
-	h = SforceEnterpriseClient('../config/wsdl.jsp.xml')
+	h = SforceEnterpriseClient('/Users/mistewart/geektool/config/wsdl.jsp.xml')
 	result = h.login(username, password, securitytoken)
 	return result['sessionId']
 
