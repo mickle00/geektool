@@ -39,7 +39,8 @@ def parseCaseJSON(jsonResponse):
     jsonResponse = json.loads(jsonResponse)
     if (jsonResponse['totalSize'] > 0):
         for record in jsonResponse['records']:
-            output.write(record['Status'] + '\t' + record['CaseNumber'] + '\t' + record['Subject'])
+            #output.write(record['Status'] + '\t' + record['CaseNumber'] + '\t' + record['Subject'])
+            output.write('{0: <25}{1: <10}{2}'.format(record['Status'], record['CaseNumber'], record['Subject']))
 	    output.write('\n')
     output.close()
 
