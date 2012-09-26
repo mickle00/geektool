@@ -1,1 +1,1 @@
-SELECT Id, Subject FROM Case LIMIT 100
+SELECT Id, Subject, CaseNumber FROM Case WHERE Owner.Name = 'Michael Stewart' AND isClosed = FALSE 
