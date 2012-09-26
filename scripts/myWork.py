@@ -33,7 +33,7 @@ def doUrllib(queryString):
 	return res.read()
 
 def parseCaseJSON(jsonResponse):
-    output = open('/Users/Mikey/geektool/tmp/cases.txt','w')
+    output = open('../tmp/cases.txt','w')
     output.write('\n My Open Cases\n')
     output.write('----------------\n')
     jsonResponse = json.loads(jsonResponse)
@@ -45,7 +45,7 @@ def parseCaseJSON(jsonResponse):
 
 
 def parseProjectJSON(jsonResponse):
-    output = open('/Users/Mikey/geektool/tmp/log.txt','w')
+    output = open('../tmp/log.txt','w')
     output.write('\n My Open Projects\n')
     output.write('----------------\n')
     jsonResponse = json.loads(jsonResponse)
@@ -71,7 +71,7 @@ def parseCaseImage(jsonResponse):
 	chartUrl = chartUrl.replace(' ', '%20')
 	#print chartUrl
 	chartFile = urllib2.urlopen(chartUrl)
-        output = open('/Users/Mikey/geektool/tmp/image.png','wb')
+        output = open('../tmp/image.png','wb')
         output.write(chartFile.read())
         output.close()
 
