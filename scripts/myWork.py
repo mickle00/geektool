@@ -55,6 +55,17 @@ def parseProjectJSON(jsonResponse):
             output.write('{0: <20}{1}'.format(record['Status__c'], record['Project_Name__c']))
 	    output.write('\n')
     output.close()
+
+def parseRequirementJSON(jsonResponse):
+    output = open('/Users/mistewart/geektool/tmp/log.txt','w')
+    output.write('\n My Open Requirements\n')
+    output.write('----------------\n')
+    jsonResponse = json.loads(jsonResponse)
+    if (jsonResponse['totalSize'] > 0):
+        for record in jsonResponse['records']:
+            output.write('{0: <20}{1}'.format(record['Status__c'], record['Description__c']))
+	    output.write('\n')
+    output.close()
 	    
 def parseCaseImage(jsonResponse):
     jsonResponse = json.loads(jsonResponse)
@@ -86,7 +97,10 @@ def getCaseImage():
 
 caseQuery = "SELECT Id, CaseNumber, Status, Subject FROM Case WHERE OwnerId = '005C0000003oJCT' AND (isClosed = FALSE OR Status ='Closed - Reply')"  
 parseCaseJSON(doUrllib(caseQuery))
-projectQuery = "SELECT Id, Name, Project_Name__c, Status__c FROM PM_Project__c WHERE (OwnerId = '005C0000003oJCT' OR Developer__c = '005C0000003oJCT') AND Status__c NOT IN ('Completed', 'Cancelled') ORDER BY Status__c"
-parseProjectJSON(doUrllib(projectQuery))
+
+#projectQuery = "SELECT Id, Name, Project_Name__c, Status__c FROM PM_Project__c WHERE (OwnerId = '005C0000003oJCT' OR Developer__c = '005C0000003oJCT') AND Status__c NOT IN ('Completed', 'Cancelled') ORDER BY Status__c"
+#parseProjectJSON(doUrllib(projectQuery))
+requirementQuery = "SELECT Description__c, Release__r.Deployment_Date__c, Status__c FROM PM_Requirement__c WHERE Current_Assigned_To_Viewing__c = 1 AND Status__c NOT IN ('Completed','Cancelled','Duplicate', 'Not a Requirement') ORDER BY Status__c"
+parseRequirementJSON(doUrllib(requirementQuery))
 
 getCaseImage()
